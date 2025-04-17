@@ -84,11 +84,6 @@ class R2Manager
         $info = curl_getinfo($ch);
         curl_close($ch);
 
-        echo "Request URL: $url\n";
-        echo "Request Headers: " . print_r($headers, true) . "\n";
-        echo "Response Status: " . $info['http_code'] . "\n";
-        echo "Response Body: $response\n";
-
         return ['status' => $info['http_code'], 'body' => $response];
     }
 
@@ -128,15 +123,20 @@ class R2Manager
         $info = curl_getinfo($ch);
         curl_close($ch);
 
-        echo "Response Status Code: " . $info['http_code'] . "\n";
-        echo "Response Body: $xml\n";
+        if ($info['http_code'] !== 200) {
+            return [];
+        }
 
         $list = [];
-        if ($xml && $info['http_code'] === 200) {
+        if ($xml) {
             $parsed = simplexml_load_string($xml);
             if ($parsed && isset($parsed->Contents)) {
                 foreach ($parsed->Contents as $item) {
-                    $list[] = (string)$item->Key;
+                    $list[] = [
+                        'Key' => (string)$item->Key,
+                        'LastModified' => (string)$item->LastModified,
+                        'Size' => (int)$item->Size
+                    ];
                 }
             }
         }
